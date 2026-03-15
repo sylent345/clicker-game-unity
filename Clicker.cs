@@ -4,8 +4,6 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-// --- ВСПОМОГАТЕЛЬНЫЕ КЛАССЫ ---
-
 [System.Serializable]
 public class Skin {
     public string skinName;
@@ -21,7 +19,7 @@ public class ClickSoundItem {
     public string soundName;
     public AudioClip clip;
     public int price;
-    public int clickBonus; // Бонус к прибыли за клик от звука
+    public int clickBonus;
     public bool isBought;
 }
 
@@ -48,7 +46,7 @@ public enum AchievementType {
     BuySound, 
     BuyBackground, 
     CollectAllSkins,
-    ClicksPerSecond // Достижение за скорость клика
+    ClicksPerSecond
 }
 
 [System.Serializable]
@@ -57,7 +55,7 @@ public class Achievement {
     public string description;
     public AchievementType type;
     public int goalValue;      
-    public int itemIndex;      // Индекс предмета для Buy типов
+    public int itemIndex;
     public int reward;         
     public bool isUnlocked;    
 }
@@ -68,7 +66,7 @@ public class Clicker : MonoBehaviour {
     public TextMeshProUGUI moneyText;
     private int currentSkinBonus = 1; 
     private int currentBgPassiveBonus = 0; 
-    private int currentSoundBonus = 0; // Бонус от выбранного звука
+    private int currentSoundBonus = 0;
 
     [Header("Система достижений")]
     public Achievement[] achievements;
@@ -130,13 +128,13 @@ public class Clicker : MonoBehaviour {
     public Toggle fpsToggle;
     private bool showFPS = false;
     private float deltaTimeFPS = 0.0f;
-    private List<float> clickTimes = new List<float>(); // Для расчета CPS
+    private List<float> clickTimes = new List<float>();
     private float currentCPS = 0;
 
     [Header("Социальные сети")]
-    public string telegramURL = "https://t.me/your_channel";
-    public string discordURL = "https://discord.gg/your_invite";
-    public string githubURL = "https://github.com/your_profile";
+    public string telegramURL = "https://t.me/channel";
+    public string discordURL = "https://discord.gg/invite";
+    public string githubURL = "https://github.com/profile";
 
     private float autoIncomeTimer = 0f;
     private List<AudioClip> allSongsMixed = new List<AudioClip>();
@@ -184,7 +182,6 @@ public class Clicker : MonoBehaviour {
     }
 
     void Update() {
-        // Авто-доход
         if (autoLevel > 0) {
             autoIncomeTimer += Time.deltaTime;
             if (autoIncomeTimer >= 1f) {
@@ -196,11 +193,9 @@ public class Clicker : MonoBehaviour {
             }
         }
 
-        // Музыка
         if (musicSource != null && !musicSource.isPlaying && musicSource.time == 0 && musicSource.clip != null) 
             PlayNextRandom();
 
-        // FPS и расчет CPS
         CalculateCPS();
         if (showFPS && fpsText != null) {
             deltaTimeFPS += (Time.unscaledDeltaTime - deltaTimeFPS) * 0.1f;
@@ -211,17 +206,16 @@ public class Clicker : MonoBehaviour {
     }
 
     void CalculateCPS() {
-        clickTimes.RemoveAll(t => t < Time.time - 1f); // Удаляем клики старше 1 секунды
+        clickTimes.RemoveAll(t => t < Time.time - 1f);
         currentCPS = clickTimes.Count;
         if (currentCPS > 0) CheckAchievements();
     }
 
     public void OnClick() {
-        // Прибыль = (Уровень клика + Бонус уровня) + Бонус Скина + Бонус Звука
         int clickIncome = (clickLevel + (clickLevel >= 30 ? 10 : 0) + currentSkinBonus + currentSoundBonus);
         money += clickIncome;
         
-        clickTimes.Add(Time.time); // Добавляем время клика для CPS
+        clickTimes.Add(Time.time);
 
         UpdateUI(); 
         SaveGame();
@@ -232,8 +226,7 @@ public class Clicker : MonoBehaviour {
         
         StartCoroutine(PunchAnimation());
     }
-
-    // --- СИСТЕМА ДОСТИЖЕНИЙ ---
+    
     void CheckAchievements() {
         foreach (Achievement a in achievements) {
             if (a.isUnlocked) continue;
@@ -288,8 +281,7 @@ public class Clicker : MonoBehaviour {
         }
         achievementPanel.SetActive(false);
     }
-
-    // --- МАГАЗИН ФОНОВ ---
+    
     public void NextBg() { PlayUIClick(); selectedBgIndex = (selectedBgIndex + 1) % backgrounds.Length; UpdateBgShopUI(); }
     public void PreviousBg() { PlayUIClick(); selectedBgIndex--; if (selectedBgIndex < 0) selectedBgIndex = backgrounds.Length - 1; UpdateBgShopUI(); }
     public void BuyOrEquipBg() {
@@ -319,8 +311,7 @@ public class Clicker : MonoBehaviour {
         if (bgBonusText) bgBonusText.text = "Пассив: +" + b.passiveBonus + "/сек";
         bgStatusText.text = (selectedBgIndex == equippedBgIndex) ? "Надето" : (b.isBought ? "Надеть" : b.price + "$");
     }
-
-    // --- МАГАЗИН ЗВУКОВ ---
+    
     public void NextSound() { PlayUIClick(); selectedSoundIndex = (selectedSoundIndex + 1) % clickSounds.Length; UpdateSoundShopUI(); }
     public void PreviousSound() { PlayUIClick(); selectedSoundIndex--; if (selectedSoundIndex < 0) selectedSoundIndex = clickSounds.Length - 1; UpdateSoundShopUI(); }
     public void PreviewSound() { if (clickSounds.Length > 0 && clickSource) clickSource.PlayOneShot(clickSounds[selectedSoundIndex].clip); }
@@ -338,7 +329,7 @@ public class Clicker : MonoBehaviour {
     }
     void EquipSound(ClickSoundItem s) {
         equippedSoundIndex = selectedSoundIndex;
-        currentSoundBonus = s.clickBonus; // Применяем бонус звука
+        currentSoundBonus = s.clickBonus;
         if (isInitialized && equipSound) clickSource.PlayOneShot(equipSound);
         UpdateSoundShopUI();
     }
@@ -349,8 +340,7 @@ public class Clicker : MonoBehaviour {
         if (soundShopBonusText) soundShopBonusText.text = "Бонус: +" + s.clickBonus;
         soundShopStatusText.text = (selectedSoundIndex == equippedSoundIndex) ? "Надето" : (s.isBought ? "Надеть" : s.price + "$");
     }
-
-    // --- МАГАЗИН СКИНОВ ---
+    
     public void NextSkin() { if (isSwiping) return; PlayUIClick(); StartCoroutine(AnimateSkinSwipe(1)); }
     public void PreviousSkin() { if (isSwiping) return; PlayUIClick(); StartCoroutine(AnimateSkinSwipe(-1)); }
     IEnumerator AnimateSkinSwipe(int direction) {
@@ -394,7 +384,6 @@ public class Clicker : MonoBehaviour {
         shopStatusText.text = (selectedSkinIndex == equippedSkinIndex) ? "Надето" : (s.isBought ? "Надеть" : s.price + "$");
     }
 
-    // --- УЛУЧШЕНИЯ ---
     public void UpgradeClick() {
         int cost = (clickLevel + 1) * 10 * (int)Mathf.Pow(2, clickLevel / 10);
         if (money >= cost) { money -= cost; clickLevel++; if (isInitialized && buySound) clickSource.PlayOneShot(buySound); UpdateUI(); SaveGame(); CheckAchievements(); }
@@ -406,7 +395,6 @@ public class Clicker : MonoBehaviour {
         else if (isInitialized && errorSound) clickSource.PlayOneShot(errorSound);
     }
 
-    // --- СИСТЕМА СОХРАНЕНИЯ ---
     public void SaveGame() {
         PlayerPrefs.SetInt("Money", money);
         PlayerPrefs.SetInt("ClickLvl", clickLevel);
@@ -439,7 +427,6 @@ public class Clicker : MonoBehaviour {
         if (clickSounds.Length > equippedSoundIndex) { currentSoundBonus = clickSounds[equippedSoundIndex].clickBonus; }
     }
 
-    // --- ОБЩИЕ ФУНКЦИИ UI ---
     private void PlayUIClick() { if (isInitialized && uiClickSound && clickSource) clickSource.PlayOneShot(uiClickSound); }
     public void ChangeMusicVolume(float v) { if (musicSource) musicSource.volume = v * 0.5f; }
     public void ChangeSoundVolume(float v) { if (clickSource != null) { clickSource.volume = v; PlayerPrefs.SetFloat("SoundVolume", v); } }
@@ -466,7 +453,6 @@ public class Clicker : MonoBehaviour {
     public void ToggleMusicMenu(bool open) { if (open && isPanelOpen) return; PlayUIClick(); StartCoroutine(AnimateScale(musicMenu, open)); }
     public void ToggleUpgrade(bool open) { if (open && isPanelOpen) return; PlayUIClick(); StartCoroutine(AnimateSlide(upgradePanel, open)); }
 
-    // --- СОЦИАЛЬНЫЕ СЕТИ ---
     public void OpenTelegram() { PlayUIClick(); Application.OpenURL(telegramURL); }
     public void OpenDiscord() { PlayUIClick(); Application.OpenURL(discordURL); }
     public void OpenGithub() { PlayUIClick(); Application.OpenURL(githubURL); }
